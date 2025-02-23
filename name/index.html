@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>趣味中文名生成器</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #e60012;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .input-section {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        input[type="text"] {
+            padding: 10px;
+            width: 300px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 30px;
+            font-size: 16px;
+            background-color: #e60012;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #cc0000;
+        }
+        .result-section {
+            margin-top: 30px;
+        }
+        .name-card {
+            background-color: #f8f8f8;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #e60012;
+        }
+        .loading {
+            text-align: center;
+            display: none;
+        }
+        .chinese-name {
+            font-size: 24px;
+            color: #e60012;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>趣味中文名生成器</h1>
+        <div class="input-section">
+            <input type="text" id="englishName" placeholder="请输入您的英文名">
+            <button onclick="generateNames()">生成中文名</button>
+        </div>
+        <div class="loading" id="loading">
+            正在思考完美的中文名...
+        </div>
+        <div class="result-section" id="results">
+        </div>
+    </div>
+
+    <script>
+        async function generateNames() {
+            const englishName = document.getElementById('englishName').value.trim();
+            if (!englishName) {
+                alert('请输入英文名！');
+                return;
+            }
+
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            loading.style.display = 'block';
+            results.innerHTML = '';
+
+            try {
+                const response = await fetch('http://localhost:3000/generate-names', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ englishName })
+                });
+
+                const data = await response.json();
+                loading.style.display = 'none';
+
+                if (data.error) {
+                    alert('生成失败：' + data.error);
+                    return;
+                }
+
+                // 直接使用返回的内容，无需再次解析
+                const names = data.content;
+                
+                if (!Array.isArray(names)) {
+                    console.error('返回数据:', data.content);
+                    alert('返回数据格式不正确');
+                    return;
+                }
+
+                names.forEach(name => {
+                    const nameCard = document.createElement('div');
+                    nameCard.className = 'name-card';
+                    nameCard.innerHTML = `
+                        <div class="chinese-name">${name.chinese || '未知'}</div>
+                        <p><strong>寓意：</strong>${name.meaning || '未知'}</p>
+                        <p><strong>文化解释：</strong>${name.cultural_explanation || '未知'}</p>
+                        <p><strong>英文解释：</strong>${name.english_explanation || '未知'}</p>
+                    `;
+                    results.appendChild(nameCard);
+                });
+            } catch (error) {
+                loading.style.display = 'none';
+                console.error('Error:', error);
+                alert('生成失败，请稍后重试');
+            }
+        }
+    </script>
+</body>
+</html>
